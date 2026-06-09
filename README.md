@@ -7,8 +7,8 @@ LaTeX; enabling this plugin layers Critica's iA Writer–calibrated typography
 pandoc/tectonic pipeline via the host's `pdfStyle` extension point.
 
 This is a **standalone package**, intentionally not part of the Loica repo. It
-has no build step and no dependency on Loica's source — it locates its own
-assets via `import.meta.url` and uses the host's shared `assets/fonts`.
+has no build step and no dependency on Loica's source or assets — it locates its
+own preamble, Lua filters, and bundled IBM Plex fonts via `import.meta.url`.
 
 ## Install
 
@@ -31,13 +31,14 @@ assets/
   preamble.tex       # LaTeX preamble (iA Writer Modern Sans calibration)
   date-code.lua      # render dates as monospace code
   source-caption.lua # "Source:" paragraphs -> small caption
-  wordmark.png       # org wordmark (for future cover pages)
+  wordmark.png       # org wordmark (unused today; for future cover pages)
+  fonts/             # bundled IBM Plex Sans + Mono (.otf), via OSFONTDIR
 ```
 
 ## Requirements
 
-The host Loica must provide `pandoc`, `tectonic`, and IBM Plex fonts under its
-`assets/fonts` (the default Loica ships these for DOCX export).
+The host Loica must provide `pandoc` and `tectonic` on PATH. Fonts ship with
+this package — no host font dependency.
 
 ## Compatibility
 

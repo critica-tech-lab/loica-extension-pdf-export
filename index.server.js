@@ -5,8 +5,8 @@
 // Writer–calibrated typography onto the core pandoc/tectonic pipeline via the
 // `pdfStyle` extension point.
 //
-// Self-contained: assets live alongside this file; fonts come from the host's
-// shared assets/fonts (also used by DOCX export).
+// Self-contained: the preamble, Lua filters, and IBM Plex fonts all ship
+// inside this package's assets/ — no dependency on the host's files.
 
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -24,8 +24,9 @@ const extension = {
   pdfStyle: {
     preamblePath: asset("preamble.tex"),
     luaFilters: [asset("date-code.lua"), asset("source-caption.lua")],
-    // Shared host fonts (IBM Plex), also used by DOCX export.
-    fontsDir: join(process.cwd(), "assets/fonts"),
+    // Bundled IBM Plex fonts — self-contained, no dependency on the host.
+    // Exposed to XeTeX/tectonic via OSFONTDIR.
+    fontsDir: join(here, "assets", "fonts"),
     extraPandocArgs: [
       "-V", "mainfont=IBM Plex Sans",
       "-V", "sansfont=IBM Plex Sans",
