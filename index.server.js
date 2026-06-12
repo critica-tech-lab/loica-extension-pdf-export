@@ -8,10 +8,15 @@
 // Self-contained: the preamble, Lua filters, and IBM Plex fonts all ship
 // inside this package's assets/ — no dependency on the host's files.
 
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
-const here = dirname(fileURLToPath(import.meta.url));
+// Vite's SSR build bundles this module into build/server/assets/, so
+// import.meta.url-relative paths no longer point at this package's own
+// assets/ dir. The submodule is always checked out at this fixed path
+// relative to the repo root (the registration contract in
+// app/extensions/index.server.ts), which matches process.cwd() in both
+// dev and the production WorkingDirectory.
+const here = join(process.cwd(), "app/extensions/critica-pdf");
 const asset = (name) => join(here, "assets", name);
 
 /** @type {import("../../app/extensions/types").LoicaExtension} */
