@@ -25,12 +25,14 @@ const extension = {
     preamblePath: asset("preamble.tex"),
     luaFilters: [asset("date-code.lua"), asset("source-caption.lua")],
     // Bundled IBM Plex fonts — self-contained, no dependency on the host.
-    // Exposed to XeTeX/tectonic via OSFONTDIR.
+    // Loaded directly via fontspec `Path=` (tectonic ignores OSFONTDIR).
     fontsDir: join(here, "assets", "fonts"),
+    fonts: [
+      { command: "mainfont", family: "IBMPlexSans" },
+      { command: "sansfont", family: "IBMPlexSans" },
+      { command: "monofont", family: "IBMPlexMono" },
+    ],
     extraPandocArgs: [
-      "-V", "mainfont=IBM Plex Sans",
-      "-V", "sansfont=IBM Plex Sans",
-      "-V", "monofont=IBM Plex Mono",
       "-V", "fontsize=11pt",
       "-V", "colorlinks=true",
       "-V", "urlcolor=linkblue",
