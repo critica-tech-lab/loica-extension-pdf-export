@@ -1,10 +1,11 @@
 # critica-pdf
 
 Opinionated **PDF house style** for [Loica](https://github.com/critica-tech-lab/loica),
-shipped as a drop-in plugin. Bare-metal Loica renders PDFs as plain default
-LaTeX; enabling this plugin layers Critica's iA Writer–calibrated typography
-(IBM Plex fonts, monospace dates, source captions, heading scale) onto the core
-pandoc/tectonic pipeline via the host's `pdfStyle` extension point.
+shipped as a drop-in plugin. Bare-metal Loica renders PDFs with a pure-JS engine
+(pdfmake) and ships no export binaries; enabling this plugin **replaces** that
+for all docs with Critica's iA Writer–calibrated pandoc/tectonic LaTeX pipeline
+(IBM Plex fonts, monospace dates, source captions, heading scale) via the host's
+`globalExporters.pdf` extension point.
 
 This is a **standalone package**, intentionally not part of the Loica repo. It
 has no build step and no dependency on Loica's source or assets — it locates its
@@ -26,7 +27,7 @@ Then enable it in **Admin → Extensions** (`critica-pdf`). It is
 ## Contents
 
 ```
-index.server.js      # ESM, default-exports the LoicaExtension (pdfStyle)
+index.server.js      # ESM, default-exports the LoicaExtension (globalExporters.pdf)
 assets/
   preamble.tex       # LaTeX preamble (iA Writer Modern Sans calibration)
   date-code.lua      # render dates as monospace code
@@ -42,5 +43,5 @@ this package — no host font dependency.
 
 ## Compatibility
 
-Targets the Loica extension API `pdfStyle` / `defaultEnabled` points. Entry is
-ESM `.js` so production `node` imports it with no build step.
+Targets the Loica extension API `globalExporters` / `defaultEnabled` points.
+Entry is ESM `.js` so production `node` imports it with no build step.
