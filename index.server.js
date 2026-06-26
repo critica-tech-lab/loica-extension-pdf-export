@@ -15,16 +15,27 @@ import { writeFileSync, readFileSync, unlinkSync, mkdirSync, existsSync, rmSync 
 import { homedir } from "node:os";
 import { join, extname, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { renderStyledPdf } from "./render-pdfmake.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const asset = (name) => join(here, "assets", name);
 
+// Mirror the host's data root so we read uploads from the same place core does
+// (core: paths.server.ts `uploadsDir = join(DATA_DIR, "uploads")`). Falls back
+// to cwd, which is what a default install uses.
+const dataDir = process.env.DATA_DIR || process.cwd();
+
 // Snap-confined tectonic can only access non-hidden dirs under $HOME.
 const tmpDir = join(homedir(), "loica-tmp");
 // Bundled fonts ship with this package; fall back to the host's if absent.
-const fontsDir = existsSync(asset("fonts")) ? asset("fonts") : join(process.cwd(), "assets", "fonts");
+const fontsDir = existsSync(asset("fonts")) ? asset("fonts") : join(dataDir, "assets", "fonts");
 
-const NATIVE = new Set([".png", ".jpg", ".jpeg", ".pdf"]);
+// Only PDFs embed into LaTeX untouched. Every raster format — including .png /
+// .jpg — is re-encoded through sharp below, because tectonic's libpng is
+// stricter than browsers/sharp and rejects otherwise-valid images with a bad
+// IDAT CRC ("libpng error: IDAT: CRC error"), failing the WHOLE export. The
+// re-encode normalizes them to a clean PNG.
+const PASSTHROUGH = new Set([".pdf"]);
 
 function rid() {
   return Math.random().toString(36).slice(2, 10);
@@ -49,7 +60,7 @@ async function convertImage(srcPath, pngPath) {
 
 async function generate(content, title, landscape) {
   mkdirSync(tmpDir, { recursive: true });
-  const uploadsDir = join(process.cwd(), "uploads");
+  const uploadsDir = join(dataDir, "uploads");
   const id = rid();
   const imgDir = join(tmpDir, `crit-img-${id}`);
   const tmpFiles = [];
@@ -61,7 +72,9 @@ async function generate(content, title, landscape) {
       const [match, alt, file] = m;
       const srcPath = join(uploadsDir, file);
       if (!existsSync(srcPath)) return { match, replacement: `![${alt}]()` };
-      if (NATIVE.has(extname(file).toLowerCase())) return { match, replacement: `![${alt}](${srcPath})` };
+      if (PASSTHROUGH.has(extname(file).toLowerCase())) return { match, replacement: `![${alt}](${srcPath})` };
+      // Re-encode every raster image (png/jpg/webp/…) to a clean PNG so a bad
+      // IDAT CRC can't kill the export. Drop the image if conversion fails.
       mkdirSync(imgDir, { recursive: true });
       const pngPath = join(imgDir, file.replace(/\.[^.]+$/, ".png"));
       if (await convertImage(srcPath, pngPath)) { tmpFiles.push(pngPath); return { match, replacement: `![${alt}](${pngPath})` }; }
@@ -140,8 +153,27 @@ const extension = {
   defaultEnabled: false,
 
   globalExporters: {
-    pdf: (doc, frontmatter, content) =>
-      generate(content ?? doc.content ?? "", doc.title || "Untitled", frontmatter?.orientation === "landscape"),
+    // Two engines behind one extension point. Default = LaTeX (pandoc/tectonic).
+    // Opt into the pure-JS pdfmake renderer — same iA house style, zero binaries
+    // — per-install via CRITICA_PDF_ENGINE=pdfmake or per-doc via frontmatter
+    // `pdf_engine: pdfmake`. Lets you A/B the two against the same document.
+    pdf: (doc, frontmatter, content) => {
+      const body = content ?? doc.content ?? "";
+      const title = doc.title || "Untitled";
+      const landscape = frontmatter?.orientation === "landscape";
+      const engine = (process.env.CRITICA_PDF_ENGINE || frontmatter?.pdf_engine || "latex").toLowerCase();
+      if (engine === "pdfmake" || engine === "purejs" || engine === "js") {
+        return renderStyledPdf(body, title, landscape).then((pdf) =>
+          new Response(new Uint8Array(pdf), {
+            headers: {
+              "Content-Type": "application/pdf",
+              "Content-Disposition": `attachment; filename="${title.replace(/[^a-zA-Z0-9_\-. ]/g, "_")}.pdf"`,
+            },
+          }),
+        );
+      }
+      return generate(body, title, landscape);
+    },
   },
 };
 

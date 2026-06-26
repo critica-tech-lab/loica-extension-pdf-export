@@ -28,6 +28,7 @@ Then enable it in **Admin → Extensions** (`critica-pdf`). It is
 
 ```
 index.server.js      # ESM, default-exports the LoicaExtension (globalExporters.pdf)
+package.json         # manifest — version + engines.loica (host API compat)
 assets/
   preamble.tex       # LaTeX preamble (iA Writer Modern Sans calibration)
   date-code.lua      # render dates as monospace code
@@ -36,10 +37,23 @@ assets/
   fonts/             # bundled IBM Plex Sans + Mono (.otf), via OSFONTDIR
 ```
 
+## Engines
+
+Two renderers sit behind the one `globalExporters.pdf` point:
+
+- **`latex`** (default) — `pandoc` → `tectonic`. Highest typographic quality;
+  requires those two binaries on PATH.
+- **`pdfmake`** — pure-JS (`render-pdfmake.js`), the same iA house style with
+  **no binaries**. ~90% of the LaTeX look; good when a host can't install TeX.
+
+Select per install with `CRITICA_PDF_ENGINE=pdfmake`, or per document with
+frontmatter `pdf_engine: pdfmake`. Unset → `latex`.
+
 ## Requirements
 
-The host Loica must provide `pandoc` and `tectonic` on PATH. Fonts ship with
-this package — no host font dependency.
+For the `latex` engine, the host must provide `pandoc` and `tectonic` on PATH.
+The `pdfmake` engine needs neither — only the host's npm deps (`pdfmake`,
+`marked`, `marked-footnote`, `sharp`). Fonts ship with this package either way.
 
 ## Compatibility
 

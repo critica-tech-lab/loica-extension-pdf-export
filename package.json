@@ -1,0 +1,16 @@
+{
+  "name": "loica-extension-pdf-export",
+  "version": "1.0.0",
+  "description": "Critica PDF house style (iA Writer typography, mono dates, source captions) via pandoc/tectonic.",
+  "type": "module",
+  "main": "index.server.js",
+  "private": true,
+  "homepage": "https://github.com/critica-tech-lab/loica-extension-pdf-export",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/critica-tech-lab/loica-extension-pdf-export.git"
+  },
+  "engines": {
+    "loica": "1"
+  }
+}
