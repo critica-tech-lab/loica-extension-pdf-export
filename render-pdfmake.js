@@ -6,15 +6,20 @@
 import { createRequire } from "node:module";
 import { existsSync, readFileSync } from "node:fs";
 import { join, extname, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fontsDir = join(here, "assets", "fonts");
 const dataDir = process.env.DATA_DIR || process.cwd();
 
-// pdfmake's node printer is CJS and lives in the HOST's node_modules. Resolve it
-// from the host root (cwd) so symlinked-plugin resolution can't miss it.
+// All npm deps (pdfmake, marked, marked-footnote, sharp) live in the HOST's
+// node_modules, not this package's — it ships none. When the plugin is a
+// symlink into plugins/, Node's ESM resolves bare imports from this file's
+// REAL path (the extension checkout, which has no node_modules), so `import
+// "marked"` would fail. Resolve every dep from the host root instead, so the
+// plugin works whether it's symlinked or cloned in.
 const hostRequire = createRequire(join(dataDir, "package.json"));
+const hostImport = (name) => import(pathToFileURL(hostRequire.resolve(name)).href);
 
 // ── House-style constants (from preamble.tex) ───────────────────────────────
 const BODY = "#1A1A1A";
@@ -253,9 +258,9 @@ function footnoteInline(content) {
 
 // ── Entry point ──────────────────────────────────────────────────────────────
 export async function renderStyledPdf(markdown, title, landscape = false) {
-  const { Marked } = await import("marked");
-  const markedFootnote = (await import("marked-footnote")).default;
-  const sharp = (await import("sharp")).default;
+  const { Marked } = await hostImport("marked");
+  const markedFootnote = (await hostImport("marked-footnote")).default;
+  const sharp = (await hostImport("sharp")).default;
 
   const cleaned = markdown.replace(/(!\[[^\]]*\]\([^)]+\))\{width=\d+px\}/g, "$1");
   const marked = new Marked().use(markedFootnote());
