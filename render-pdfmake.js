@@ -1,8 +1,7 @@
 // Pure-JS Critica PDF renderer — marked tokens → pdfmake → PDF, NO binaries.
-// A faithful-as-pdfmake-allows port of the iA-Writer LaTeX house style in
-// assets/preamble.tex (+ the date-code / source-caption Lua filters), so an
-// install without pandoc/tectonic still gets the Critica look. Selected via
-// CRITICA_PDF_ENGINE=pdfmake or frontmatter `pdf_engine: pdfmake`.
+// The iA-Writer house style: centered text column, monospace auto-detected
+// dates, "Source:" captions, booktabs tables, IBM Plex fonts. This is the sole
+// engine behind the extension's `globalExporters.pdf` point.
 
 import { createRequire } from "node:module";
 import { existsSync, readFileSync } from "node:fs";
