@@ -27,6 +27,18 @@ git clone <this-repo-url> /path/to/loica/plugins/critica-pdf
 Then enable it in **Admin → Extensions** (`critica-pdf`). It is
 `defaultEnabled: false`, so the install keeps core's plain style until toggled on.
 
+A **symlink** works too (handy for local dev on the plugin):
+
+```sh
+ln -s /path/to/loica-extension-pdf-export /path/to/loica/plugins/critica-pdf
+```
+
+Either way, the plugin ships no `node_modules` of its own — it resolves
+`pdfmake`, `marked`, `marked-footnote` and `sharp` from the **host's** node
+tree (via `createRequire` against the host `package.json`), so a symlinked
+checkout finds them just as a clone would. The host bundles the server at build
+time, so after editing the plugin, rebuild + restart Loica to pick up changes.
+
 ## Contents
 
 ```
