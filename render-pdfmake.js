@@ -6,7 +6,7 @@
 import { createRequire } from "node:module";
 import { existsSync, readFileSync } from "node:fs";
 import { join, extname, dirname } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fontsDir = join(here, "assets", "fonts");
@@ -14,12 +14,14 @@ const dataDir = process.env.DATA_DIR || process.cwd();
 
 // All npm deps (pdfmake, marked, marked-footnote, sharp) live in the HOST's
 // node_modules, not this package's — it ships none. When the plugin is a
-// symlink into plugins/, Node's ESM resolves bare imports from this file's
-// REAL path (the extension checkout, which has no node_modules), so `import
+// symlink into plugins/, Node's resolution starts from this file's REAL path
+// (the extension checkout, which has no node_modules), so a bare `require
 // "marked"` would fail. Resolve every dep from the host root instead, so the
-// plugin works whether it's symlinked or cloned in.
+// plugin works whether it's symlinked or cloned in. Plain `require` (not
+// dynamic `import`) so this also works under Vite's dev SSR module runner,
+// which evaluates dynamically-imported `.cjs` files as ESM (no `module`/
+// `require` shims) and throws "module is not defined".
 const hostRequire = createRequire(join(dataDir, "package.json"));
-const hostImport = (name) => import(pathToFileURL(hostRequire.resolve(name)).href);
 
 // ── House-style constants (from preamble.tex) ───────────────────────────────
 const BODY = "#1A1A1A";
@@ -258,9 +260,9 @@ function footnoteInline(content) {
 
 // ── Entry point ──────────────────────────────────────────────────────────────
 export async function renderStyledPdf(markdown, title, landscape = false) {
-  const { Marked } = await hostImport("marked");
-  const markedFootnote = (await hostImport("marked-footnote")).default;
-  const sharp = (await hostImport("sharp")).default;
+  const { Marked } = hostRequire("marked");
+  const markedFootnote = hostRequire("marked-footnote");
+  const sharp = hostRequire("sharp");
 
   const cleaned = markdown.replace(/(!\[[^\]]*\]\([^)]+\))\{width=\d+px\}/g, "$1");
   const marked = new Marked().use(markedFootnote());
