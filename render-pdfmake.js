@@ -305,9 +305,11 @@ export async function renderStyledPdf(markdown, title, landscape = false) {
     content,
   };
 
-  const PdfPrinter = hostRequire("pdfmake/src/printer");
-  const printer = new PdfPrinter(fonts);
-  const pdfDoc = printer.createPdfKitDocument(docDefinition);
+  const PdfPrinter = hostRequire("pdfmake/js/Printer").default ?? hostRequire("pdfmake/js/Printer");
+  const URLResolver = hostRequire("pdfmake/js/URLResolver").default ?? hostRequire("pdfmake/js/URLResolver");
+  const urlResolver = new URLResolver({ existsSync: () => false, writeFileSync: () => {} });
+  const printer = new PdfPrinter(fonts, undefined, urlResolver);
+  const pdfDoc = await printer.createPdfKitDocument(docDefinition);
 
   return await new Promise((res, rej) => {
     const chunks = [];
