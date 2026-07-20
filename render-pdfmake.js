@@ -5,12 +5,16 @@
 
 import { createRequire } from "node:module";
 import { existsSync, readFileSync } from "node:fs";
-import { join, extname, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join, extname } from "node:path";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const fontsDir = join(here, "assets", "fonts");
 const dataDir = process.env.DATA_DIR || process.cwd();
+// Anchored to dataDir (host root), not import.meta.url: production bundles
+// this file into one build/server/assets/server-build-*.js chunk, so
+// import.meta.url no longer points at the extension's own checkout — the
+// fonts (which are never bundled, just read via fs at runtime) would resolve
+// to a path that doesn't exist. The extension always lives at this fixed
+// path under the host tree regardless of submodule/symlink install method.
+const fontsDir = join(dataDir, "app", "extensions", "critica-pdf", "assets", "fonts");
 
 // All npm deps (pdfmake, marked, marked-footnote, sharp) live in the HOST's
 // node_modules, not this package's — it ships none. When the plugin is a
